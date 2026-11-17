@@ -1,3 +1,5 @@
+// A short branded entrance on every full-page navigation, with a hard fallback.
+(()=>{const root=document.documentElement,loader=document.querySelector('.page-loader');if(!loader)return;const started=performance.now();let first=true;try{first=!sessionStorage.getItem('fk-visited');sessionStorage.setItem('fk-visited','1')}catch{}const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;const minimum=reduced?0:(first?820:430);let finished=false;function finish(){if(finished)return;finished=true;setTimeout(()=>{root.classList.remove('js-boot');root.classList.add('page-ready');loader.classList.add('finished');setTimeout(()=>loader.remove(),300)},Math.max(0,minimum-(performance.now()-started)))}if(document.readyState==='complete')finish();else window.addEventListener('load',finish,{once:true});setTimeout(finish,1150);window.addEventListener('pageshow',e=>{if(e.persisted){root.classList.remove('js-boot');loader.remove()}})})();
 const toggle=document.querySelector('.menu-toggle'),nav=document.querySelector('header nav');toggle.addEventListener('click',()=>{const o=toggle.getAttribute('aria-expanded')!=='true';toggle.setAttribute('aria-expanded',o);toggle.setAttribute('aria-label',o?'Menu sluiten':'Menu openen');nav.classList.toggle('open',o);toggle.textContent=o?'×':'☰'});document.addEventListener('keydown',e=>{if(e.key==='Escape'){nav.classList.remove('open');toggle.setAttribute('aria-expanded','false');toggle.textContent='☰'}});
 const cookie=document.querySelector('.cookie');let choice=false;try{choice=!!localStorage.getItem('frietkazerne-cookie-keuze')}catch{}if(!choice)cookie.hidden=false;document.querySelectorAll('[data-cookies]').forEach(b=>b.addEventListener('click',()=>cookie.hidden=false));document.querySelector('#cookie-ok').addEventListener('click',()=>{try{localStorage.setItem('frietkazerne-cookie-keuze','noodzakelijk')}catch{}cookie.hidden=true});document.querySelector('.cookie-close').addEventListener('click',()=>cookie.hidden=true);
 if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}}),{threshold:.08});document.querySelectorAll('.feature,.steps article,.menuitem,.formula,.menu-visual,.closing h2').forEach(e=>{e.classList.add('reveal');io.observe(e)})}
@@ -11,6 +13,10 @@ if(mascot){
  const man=new Image(),fries=new Image();man.src='/assets/firefighter-cutout.png';fries.src='/assets/fries-cutout.png';
  let ready=0,paused=matchMedia('(prefers-reduced-motion:reduce)').matches,time=0,last=0,spawn=0,raf=0;
  let flying=[],settled=[];let seed=371;
+ const gaze={x:0,y:0,tx:0,ty:0,active:false};
+ window.addEventListener('pointermove',event=>{if(event.pointerType==='touch')return;const r=canvas.getBoundingClientRect();gaze.tx=(event.clientX-r.left)*771/r.width;gaze.ty=(event.clientY-r.top)*520/r.height;gaze.active=true},{passive:true});
+ document.documentElement.addEventListener('pointerleave',()=>gaze.active=false);
+
  const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
  const makeRest=(i)=>{const x=85+random()*205;const center=1-Math.abs(x-190)/110;return{x,y:448-random()*(18+Math.max(0,center)*77),angle:(random()-.5)*Math.PI*2,size:43+random()*15,landed:-10}};
  for(let i=0;i<80;i++)settled.push(makeRest(i));
@@ -19,22 +25,25 @@ if(mascot){
  function draw(){
   ctx.clearRect(0,0,771,520);
   ctx.save();ctx.fillStyle='rgba(101,48,13,.12)';ctx.beginPath();ctx.ellipse(189,460,125,9,0,0,Math.PI*2);ctx.fill();ctx.restore();
-  const sway=Math.sin(time*2.1)*.013+Math.sin(time*4.2)*.003;
+  const sway=Math.sin(time*2.1)*.022+Math.sin(time*4.2)*.007;const bob=Math.sin(time*4.2)*1.6;
   const px=600,py=426,ix=180,iy=15,iw=590,ih=iw*1085/1449;
   const sourceX=ix+665/1449*iw,sourceY=iy+534/1085*ih;
   const dx=sourceX-px,dy=sourceY-py;
-  const nozzle={x:px+dx*Math.cos(sway)-dy*Math.sin(sway),y:py+dx*Math.sin(sway)+dy*Math.cos(sway)};
+  const nozzle={x:px+dx*Math.cos(sway)-dy*Math.sin(sway),y:py+bob+dx*Math.sin(sway)+dy*Math.cos(sway)};
   // Draw the original cutout; the emitter uses the identical transform.
-  ctx.save();ctx.translate(px,py);ctx.rotate(sway);ctx.translate(ix-px,iy-py);ctx.scale(iw/1449,ih/1085);
+  ctx.save();ctx.translate(px,py+bob);ctx.rotate(sway);ctx.translate(ix-px,iy-py);ctx.scale(iw/1449,ih/1085);
   // Split at the collar so the head can nod independently of the hose and torso.
   const head=new Path2D('M805 0H1449V440H1175L1145 488L945 580L850 510Z');
   ctx.save();ctx.beginPath();ctx.rect(0,0,1449,1085);
   const body=new Path2D();body.rect(0,0,1449,1085);body.addPath(head);ctx.clip(body,'evenodd');ctx.drawImage(man,0,0);ctx.restore();
-  ctx.save();const headAngle=Math.sin(time*1.35)*.023+Math.sin(time*2.7)*.006;
+  ctx.save();const headAngle=Math.sin(time*1.35)*.04+Math.sin(time*2.7)*.009+(gaze.active?Math.max(-.025,Math.min(.025,(gaze.x-620)/12000)):0);
   ctx.translate(1020,520);ctx.rotate(headAngle);ctx.translate(-1020,-520);ctx.clip(head);ctx.drawImage(man,0,0);
   // Eyes are redrawn in the original illustration coordinates, within the head rig.
   const cycle=time%4.7;const blink=cycle>3.65&&cycle<3.94?Math.sin((cycle-3.65)/.29*Math.PI):0;
-  const glance=Math.sin(time*.95)*2.7-2;const down=2+Math.sin(time*1.35)*1.5;
+  const inverse=ctx.getTransform().inverse();const look=new DOMPoint(gaze.x,gaze.y).matrixTransform(inverse);
+  const glance=gaze.active?Math.max(-6,Math.min(6,(look.x-1040)/90)):Math.sin(time*.95)*3.2-2;
+  const down=gaze.active?Math.max(-9,Math.min(6,(look.y-210)/95))-4:2+Math.sin(time*1.35)*1.5;
+
   [[1024,210,.30],[1057,218,.37]].forEach(([ex,ey,tilt],index)=>{
    ctx.save();ctx.translate(ex,ey);ctx.rotate(tilt);
    ctx.fillStyle='#ffa489';ctx.beginPath();ctx.ellipse(0,0,16.5,25,0,0,Math.PI*2);ctx.fill();
@@ -59,7 +68,7 @@ if(mascot){
  }
  function frame(stamp){raf=0;if(ready!==true||document.hidden)return;
   const dt=last?Math.min(.04,(stamp-last)/1000):0;last=stamp;
-  if(!paused){time+=dt;spawn+=dt;
+  if(!paused){time+=dt;spawn+=dt;if(gaze.active){const ease=1-Math.exp(-dt*10);gaze.x+=(gaze.tx-gaze.x)*ease;gaze.y+=(gaze.ty-gaze.y)*ease;}
    const nozzle=draw();
    if(spawn>=.19){spawn=0;const rest=makeRest(settled.length);flying.push({born:time,duration:1.15+random()*.23,start:{x:nozzle.x-3,y:nozzle.y},control:{x:315+random()*35,y:170+random()*25},end:rest,size:rest.size,angle:-.6,spin:(random()-.5)*4,rest})}
    flying=flying.filter(p=>{if(time-p.born<p.duration)return true;p.rest.landed=time;settled.push(p.rest);if(settled.length>105)settled.shift();return false});
@@ -73,4 +82,6 @@ if(mascot){
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;last=0}else sync()});sync();
 }
 
-const menuSearch=document.querySelector('#menu-search');if(menuSearch){let category='all';const buttons=[...document.querySelectorAll('[data-menu-category]')],sections=[...document.querySelectorAll('[data-food-category]')];function filterMenu(){const term=menuSearch.value.toLocaleLowerCase('nl').trim();let total=0;sections.forEach(section=>{let visible=0;section.querySelectorAll('[data-food-name]').forEach(row=>{const show=(category==='all'||category===section.dataset.foodCategory)&&row.dataset.foodName.toLocaleLowerCase('nl').includes(term);row.hidden=!show;if(show)visible++});section.hidden=!visible;total+=visible});document.querySelector('.menu-empty').hidden=total>0}buttons.forEach(button=>button.addEventListener('click',()=>{category=button.dataset.menuCategory;buttons.forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button))});filterMenu()}));menuSearch.addEventListener('input',filterMenu)}
+const menuSearch=document.querySelector('#menu-search');if(menuSearch){let category='all';const buttons=[...document.querySelectorAll('[data-menu-category]')],sections=[...document.querySelectorAll('[data-food-category]')];function filterMenu(){const term=menuSearch.value.toLocaleLowerCase('nl').trim();let total=0;sections.forEach(section=>{let visible=0;section.querySelectorAll('[data-food-name]').forEach(row=>{const show=(category==='all'||category===section.dataset.foodCategory)&&row.dataset.foodName.toLocaleLowerCase('nl').includes(term);row.hidden=!show;if(show)visible++});section.hidden=!visible;total+=visible});document.querySelector('.menu-empty').hidden=total>0}buttons.forEach(button=>button.addEventListener('click',()=>{category=button.dataset.menuCategory;const picker=document.querySelector('#menu-category-select');if(picker)picker.value=category;buttons.forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button))});filterMenu()}));menuSearch.addEventListener('input',filterMenu);const picker=document.querySelector('#menu-category-select');if(picker)picker.addEventListener('change',()=>{const button=buttons.find(b=>b.dataset.menuCategory===picker.value);if(button)button.click()})}
+
+document.querySelectorAll('[data-load-google]').forEach(button=>button.addEventListener('click',()=>{const box=button.closest('.google-map-box');const iframe=document.createElement('iframe');iframe.title='Google Maps: De Frietkazerne';iframe.src='https://maps.google.com/maps?q=De%20Frietkazerne%20Brandweerstraat%202%209850%20Deinze&z=16&output=embed';iframe.loading='lazy';iframe.referrerPolicy='strict-origin-when-cross-origin';iframe.allowFullscreen=true;box.replaceChildren(iframe)}));
