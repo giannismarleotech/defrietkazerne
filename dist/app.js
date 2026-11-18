@@ -33,7 +33,7 @@ const mascot=document.querySelector('.animated-mascot');
 if(mascot){
  const canvas=mascot.querySelector('canvas'),ctx=canvas.getContext('2d'),ratio=Math.min(window.devicePixelRatio||1,2);
  canvas.width=771*ratio;canvas.height=520*ratio;
- const man=new Image(),fries=new Image();let loaded=0,time=0,last=0,raf=0,acc=0,visible=true;
+ const man=new Image(),fries=new Image(),setting=new Image();let loaded=0,time=0,last=0,raf=0,acc=0,visible=true;
  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
  const gaze={x:500,y:260,tx:500,ty:260,active:false};
  let seed=371;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
@@ -42,16 +42,22 @@ if(mascot){
  const arms=new Path2D('M643 503L735 490L823 526L884 562L967 578L1082 589L1177 619L1215 665L1202 722L1126 746L995 722L927 709L875 663L790 650L748 615L700 582L645 559Z');
  const body=new Path2D();body.rect(0,0,1449,1085);body.addPath(head);body.addPath(arms);
  let flying=[],pile=[],crumbs=[],nextBlink=2.6,blinkStart=-10;
- const rest=()=>{const x=78+rnd()*216,c=1-Math.abs(x-188)/112;return{x,y:449-rnd()*(15+Math.max(0,c)*75),a:(rnd()-.5)*Math.PI*2,size:41+rnd()*16,born:-5}};
- for(let i=0;i<78;i++)pile.push(rest());pile.sort((a,b)=>a.y-b.y);
+ const rest=()=>{const x=219+rnd()*146,c=Math.max(0,1-Math.abs(x-292)/77);return{x,y:448-c*(12+rnd()*30),a:.8+(rnd()-.5)*1.8,size:30+rnd()*11,born:-5}};
+ for(let i=0;i<27;i++)pile.push(rest());pile.sort((a,b)=>a.y-b.y);
  window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const r=canvas.getBoundingClientRect();gaze.tx=(e.clientX-r.left)*771/r.width;gaze.ty=(e.clientY-r.top)*520/r.height;gaze.active=true},{passive:true});
  document.documentElement.addEventListener('pointerleave',()=>gaze.active=false);
  function drawFry(x,y,size,a,roll=0,alpha=1){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.scale(.68+.32*Math.abs(Math.cos(roll)),1);ctx.globalAlpha=alpha;ctx.drawImage(fries,1094,185,200,195,-size/2,-size/2,size,size*.975);ctx.restore()}
  function paint(){
   ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,771,520);
-  ctx.fillStyle='rgba(101,48,13,.10)';ctx.beginPath();ctx.ellipse(188,460,122,8,0,0,Math.PI*2);ctx.fill();
-  const recoil=Math.sin(time*4.1),sway=Math.sin(time*1.8)*.022+recoil*.006,bob=Math.sin(time*3.6)*1.7;
-  ctx.save();ctx.translate(600,426+bob);ctx.rotate(sway);ctx.translate(-420,-411);ctx.scale(590/1449,590/1449);
+  // A common camera and ground plane connect the whole scene.
+  ctx.drawImage(setting,0,0,771,514);
+  ctx.fillStyle='rgba(82,52,27,.12)';ctx.beginPath();ctx.ellipse(602,453,86,9,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(293,466,91,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff6df';ctx.strokeStyle='#5c402b';ctx.lineWidth=2;ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(199,439);ctx.quadraticCurveTo(290,422,385,439);ctx.lineTo(365,464);ctx.quadraticCurveTo(292,480,219,463);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#dfbd85';ctx.beginPath();ctx.ellipse(292,440,88,12,0,0,Math.PI*2);ctx.fill();
+  const recoil=Math.sin(time*4.1),sway=Math.sin(time*1.8)*.009+recoil*.003,bob=Math.sin(time*3.6)*.6;
+  ctx.save();ctx.translate(610,449+bob);ctx.rotate(sway);ctx.translate(-312,-309);ctx.scale(.3,.3);
   // Solid torso backing prevents gaps when the independent arm layer moves.
   ctx.save();ctx.fillStyle='#155b78';ctx.beginPath();ctx.moveTo(941,584);ctx.lineTo(1143,588);ctx.lineTo(1191,716);ctx.lineTo(965,719);ctx.closePath();ctx.fill();ctx.restore();
   ctx.save();ctx.clip(body,'evenodd');ctx.drawImage(man,0,0);ctx.restore();
@@ -74,25 +80,29 @@ if(mascot){
    ctx.restore();
   });
   ctx.restore();ctx.restore();
-  pile.forEach(p=>{const age=time-p.born;const spring=age>=0&&age<.45?Math.sin(age/.45*Math.PI*2)*5*Math.exp(-age*6):0;drawFry(p.x,p.y-spring,p.size,p.a+spring*.025)});
+  pile.slice().sort((a,b)=>a.y-b.y).forEach(p=>{const age=time-p.born;const spring=age>=0&&age<.45?Math.sin(age/.45*Math.PI*2)*2.8*Math.exp(-age*6):0;drawFry(p.x,p.y-spring,p.size,p.a+spring*.025)});
+  // Front paper rim occludes the lowest fries.
+  ctx.fillStyle='#f7dfad';ctx.strokeStyle='#5c402b';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(205,451);ctx.quadraticCurveTo(292,467,379,451);ctx.lineTo(365,464);ctx.quadraticCurveTo(292,480,219,463);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#d5ac6a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(230,461);ctx.lineTo(354,463);ctx.stroke();
   flying.forEach(p=>{const age=time-p.born,u=clamp(age/p.duration,0,1);const x=p.x+p.vx*age,y=p.y+p.vy*age+210*age*age;drawFry(x,y,p.size*(.27+.73*Math.min(1,u/.16)),p.angle+age*p.spin,age*p.roll)});
   crumbs.forEach(p=>{const a=time-p.born;ctx.fillStyle='#d99c32';ctx.globalAlpha=Math.max(0,1-a/.45)*.6;ctx.beginPath();ctx.arc(p.x+p.vx*a,p.y+p.vy*a+100*a*a,1.4,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;
   // Barely visible steam rises from the warm pile, never across the face.
-  for(let i=0;i<3;i++){const u=(time*.22+i*.31)%1;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.16;ctx.strokeStyle='#bc965f';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(145+i*34,376-u*24);ctx.bezierCurveTo(135+i*34,364-u*24,161+i*34,357-u*24,149+i*34,344-u*24);ctx.stroke();ctx.restore()}
+  for(let i=0;i<3;i++){const u=(time*.22+i*.31)%1;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.16;ctx.strokeStyle='#bc965f';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(263+i*26,409-u*20);ctx.bezierCurveTo(253+i*26,397-u*20,279+i*26,390-u*20,267+i*26,377-u*20);ctx.stroke();ctx.restore()}
   return nozzle;
  }
- function nozzlePosition(){const recoil=Math.sin(time*4.1),sway=Math.sin(time*1.8)*.022+recoil*.006,bob=Math.sin(time*3.6)*1.7;const matrix=new DOMMatrix().translate(600,426+bob).rotate(sway*180/Math.PI).translate(-420,-411).scale(590/1449).translate(1120,686).rotate((-.014+recoil*.021)*180/Math.PI).translate(-1120,-686);return new DOMPoint(666,535).matrixTransform(matrix)}
- function frame(stamp){raf=0;if(loaded<2||document.hidden||!visible)return;const dt=last?Math.min(.04,(stamp-last)/1000):0;last=stamp;
+ function nozzlePosition(){const recoil=Math.sin(time*4.1),sway=Math.sin(time*1.8)*.009+recoil*.003,bob=Math.sin(time*3.6)*.6;const matrix=new DOMMatrix().translate(610,449+bob).rotate(sway*180/Math.PI).translate(-312,-309).scale(.3).translate(1120,686).rotate((-.014+recoil*.021)*180/Math.PI).translate(-1120,-686);return new DOMPoint(666,535).matrixTransform(matrix)}
+ function frame(stamp){raf=0;if(loaded<3||document.hidden||!visible)return;const dt=last?Math.min(.04,(stamp-last)/1000):0;last=stamp;
   if(!reduced){time+=dt;acc+=dt;const ease=1-Math.exp(-dt*8);if(gaze.active){gaze.x+=(gaze.tx-gaze.x)*ease;gaze.y+=(gaze.ty-gaze.y)*ease}
    if(time>=nextBlink){blinkStart=time;nextBlink=time+2.6+rnd()*3.2}
    const nozzle=nozzlePosition();
-   if(acc>.155){acc=0;const end=rest(),duration=1.05+rnd()*.25;flying.push({x:nozzle.x-2,y:nozzle.y,born:time,duration,vx:(end.x-nozzle.x)/duration,vy:(end.y-nozzle.y-210*duration*duration)/duration,angle:-.6,spin:(rnd()-.5)*5,roll:3+rnd()*4,size:end.size,end});if(rnd()>.4)crumbs.push({x:nozzle.x-5,y:nozzle.y,born:time,vx:-55-rnd()*35,vy:-15-rnd()*35})}
-   flying=flying.filter(p=>{if(time-p.born<p.duration)return true;p.end.born=time;pile.push(p.end);if(pile.length>105)pile.shift();return false});crumbs=crumbs.filter(p=>time-p.born<.45);
+   if(acc>.27){acc=0;const end=rest(),duration=.83+rnd()*.14;flying.push({x:nozzle.x-2,y:nozzle.y,born:time,duration,vx:(end.x-nozzle.x)/duration,vy:(end.y-nozzle.y-210*duration*duration)/duration,angle:.8+Math.atan2(end.y-nozzle.y-210*duration*duration,end.x-nozzle.x),spin:(rnd()-.5)*5,roll:3+rnd()*4,size:end.size,end});if(rnd()>.4)crumbs.push({x:nozzle.x-5,y:nozzle.y,born:time,vx:-55-rnd()*35,vy:-15-rnd()*35})}
+   flying=flying.filter(p=>{if(time-p.born<p.duration)return true;p.end.born=time;pile.push(p.end);if(pile.length>45)pile.shift();return false});crumbs=crumbs.filter(p=>time-p.born<.45);
   }
   paint();if(!reduced)raf=requestAnimationFrame(frame);
  }
- const start=()=>{last=0;if(loaded===2&&!raf)raf=requestAnimationFrame(frame)};
- man.onload=fries.onload=()=>{loaded++;start()};man.src='/assets/firefighter-cutout.png';fries.src='/assets/fries-cutout.png';
+ const start=()=>{last=0;if(loaded===3&&!raf)raf=requestAnimationFrame(frame)};
+ man.onload=fries.onload=setting.onload=()=>{loaded++;start()};man.src='/assets/firefighter-cutout.png';fries.src='/assets/fries-cutout.png';setting.src='/assets/kazerne-scene.webp';
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;last=0}else start()});
  new IntersectionObserver(es=>{visible=es[0].isIntersecting;if(visible)start();else{cancelAnimationFrame(raf);raf=0;last=0}},{threshold:.05}).observe(canvas);
 }
