@@ -4,8 +4,30 @@ const toggle=document.querySelector('.menu-toggle'),nav=document.querySelector('
 const cookie=document.querySelector('.cookie');let choice=false;try{choice=!!localStorage.getItem('frietkazerne-cookie-keuze')}catch{}if(!choice)cookie.hidden=false;document.querySelectorAll('[data-cookies]').forEach(b=>b.addEventListener('click',()=>cookie.hidden=false));document.querySelector('#cookie-ok').addEventListener('click',()=>{try{localStorage.setItem('frietkazerne-cookie-keuze','noodzakelijk')}catch{}cookie.hidden=true});document.querySelector('.cookie-close').addEventListener('click',()=>cookie.hidden=true);
 if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}}),{threshold:.08});document.querySelectorAll('.feature,.steps article,.menuitem,.formula,.menu-visual,.closing h2').forEach(e=>{e.classList.add('reveal');io.observe(e)})}
 const hero=document.querySelector('.hero-image');if(hero){const badge=document.createElement('div');badge.className='logo-orbit';badge.innerHTML='<div><img src="/assets/logo.png" alt="De Frietkazerne — het originele logo" width="100" height="90"></div>';hero.appendChild(badge);if(matchMedia('(pointer:fine) and (prefers-reduced-motion:no-preference)').matches){hero.addEventListener('pointermove',e=>{const r=hero.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;badge.style.transform=`rotateX(${-y*12}deg) rotateY(${x*16}deg)`});hero.addEventListener('pointerleave',()=>badge.style.transform='')}}
-const form=document.querySelector('#request-form');if(form){form.addEventListener('submit',async e=>{e.preventDefault();const data=new FormData(form);const lines=['MIJN FEESTAANVRAAG','Naam: '+data.get('naam'),'Interesse: '+data.get('dienst'),'Datum: '+data.get('datum'),'Gasten: '+data.get('gasten'),'Locatie: '+data.get('locatie'),'Wensen: '+data.get('wensen'),'','Bel De Frietkazerne: 0472 82 94 25','Dit overzicht is niet verzonden.'];const output=document.querySelector('#request-output');output.textContent=lines.join('\n');output.hidden=false;const b=document.createElement('button');b.type='button';b.className='button';b.textContent='Kopieer overzicht';b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lines.join('\n'));b.textContent='Gekopieerd ✓'}catch{b.textContent='Selecteer de tekst om te kopiëren'}});output.appendChild(document.createElement('br'));output.appendChild(b);output.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'center'})})}
-
+const form=document.querySelector('#request-form');
+if(form){
+ const email=form.elements.email,gsm=form.elements.gsm,error=document.querySelector('#contact-error'),output=document.querySelector('#request-output');
+ const clearError=()=>{email.setCustomValidity('');gsm.setCustomValidity('');error.hidden=true;output.hidden=true};
+ form.addEventListener('input',clearError);
+ form.addEventListener('submit',e=>{
+  e.preventDefault();
+  const address=email.value.trim(),phone=gsm.value.trim();
+  if(!address&&!phone){error.textContent='Vul je e-mailadres of gsm-nummer in, zodat we je kunnen bereiken.';error.hidden=false;email.focus();return}
+  if(phone&&(!/^[+()\d\s.-]{6,30}$/.test(phone)||phone.replace(/\D/g,'').length<6)){error.textContent='Controleer je gsm-nummer.';error.hidden=false;gsm.focus();return}
+  const data=new FormData(form),lines=['FEESTAANVRAAG DE FRIETKAZERNE','Naam: '+data.get('naam')];
+  if(address)lines.push('E-mail: '+address);if(phone)lines.push('Gsm: '+phone);
+  lines.push('Interesse: '+data.get('dienst'),'Datum: '+data.get('datum'),'Gasten: '+data.get('gasten'),'Locatie: '+data.get('locatie'),'Wensen: '+data.get('wensen'));
+  const message=lines.join('\n');output.replaceChildren();
+  const title=document.createElement('strong');title.textContent='Je aanvraag staat klaar.';output.append(title);
+  const summary=document.createElement('p');summary.className='request-summary';summary.textContent=message;output.append(summary);
+  const note=document.createElement('p');note.className='request-note';note.textContent='Nog niet verzonden. Open je berichtenapp en verzend de sms naar 0472 82 94 25. Gewone sms-kosten kunnen gelden.';output.append(note);
+  const actions=document.createElement('div');actions.className='request-actions';
+  const sms=document.createElement('a');sms.className='button';sms.textContent='Open sms met mijn aanvraag';const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);sms.href='sms:+32472829425'+(ios?'&':'?')+'body='+encodeURIComponent(message);actions.append(sms);
+  const copy=document.createElement('button');copy.type='button';copy.className='button outline';copy.textContent='Kopieer aanvraag';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(message);copy.textContent='Aanvraag gekopieerd'}catch{copy.textContent='Selecteer de tekst om te kopiëren'}});actions.append(copy);output.append(actions);
+  const help=document.createElement('p');help.className='request-note';help.textContent='Geen berichtenapp op dit toestel? Kopieer de aanvraag of bel ons rechtstreeks.';output.append(help);
+  output.hidden=false;output.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'nearest'});
+ });
+}
 
 const mascot=document.querySelector('.animated-mascot');
 if(mascot){
