@@ -42,7 +42,7 @@ body{overflow-x:clip}.ribbon{width:100%;margin-left:0}.scene-caption{display:non
 @keyframes mascot-welcome{0%,100%{transform:rotate(-3deg) translateY(0)}35%{transform:rotate(2deg) translateY(-5px)}65%{transform:rotate(-1deg) translateY(-2px)}}
 .contact-request{position:relative;margin-top:125px;padding-top:48px;border:2px solid #65300d;border-radius:24px;background:#fff2d3;overflow:visible}
 .contact-sitter{position:absolute;width:144px;height:216px;right:25px;top:-153px;pointer-events:none;z-index:2;transform-origin:55% 70%;animation:sitter-breathe 5s ease-in-out infinite}
-.contact-sitter img{width:100%;height:100%;object-fit:contain;object-position:center}
+.contact-sitter :is(img,canvas){width:100%;height:100%;object-fit:contain;object-position:center}
 .contact-request .contact-mascot-intro{display:block;margin-bottom:18px;padding-right:80px}
 .contact-request .contact-mascot-intro h2{font-size:39px}
 .contact-request .contact-mascot-intro .eyebrow{font-size:9px}
@@ -67,11 +67,31 @@ body{overflow-x:clip}.ribbon{width:100%;margin-left:0}.scene-caption{display:non
 .service-intro-copy{min-width:0}.service-intro h1{font-size:clamp(52px,6.3vw,88px)}
 .service-intro .lead{font-size:23px;max-width:620px;margin-bottom:0}
 .service-mascot{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;isolation:isolate}
-.service-mascot img{width:100%;height:330px;object-fit:contain;position:relative;z-index:1;transform-origin:50% 92%}
-.truck-mascot img{animation:truck-idle 3.6s ease-in-out infinite}
-.catering-mascot img{height:360px;animation:catering-present 5s ease-in-out infinite}
+.service-mascot :is(img,canvas){width:100%;height:330px;object-fit:contain;position:relative;z-index:1;transform-origin:50% 92%}
+.truck-mascot :is(img,canvas){animation:truck-idle 3.6s ease-in-out infinite}
+.catering-mascot :is(img,canvas){height:360px;animation:catering-present 5s ease-in-out infinite}
 @keyframes truck-idle{0%,100%{transform:translateY(0) rotate(-.3deg)}45%{transform:translateY(-2px) rotate(.3deg)}65%{transform:translateY(0) rotate(0)}}
 @keyframes catering-present{0%,100%{transform:rotate(-1deg)}45%{transform:rotate(1deg)}70%{transform:rotate(.3deg)}}
-@media(max-width:1050px){.service-intro{gap:20px}.service-intro h1{font-size:60px}.service-intro .lead{font-size:21px}.service-mascot img{height:280px}.catering-mascot img{height:310px}}
-@media(max-width:760px){.service-intro{grid-template-columns:1fr;gap:20px;padding:40px 6% 30px}.service-intro h1{font-size:clamp(43px,11.5vw,62px);margin-bottom:23px}.service-intro .lead{font-size:21px}.service-mascot img{height:220px;max-width:360px}.catering-mascot img{height:245px}.service-mascot{margin:0 -5px}.service-intro .eyebrow{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.service-mascot img{animation:none!important}}
+@media(max-width:1050px){.service-intro{gap:20px}.service-intro h1{font-size:60px}.service-intro .lead{font-size:21px}.service-mascot :is(img,canvas){height:280px}.catering-mascot :is(img,canvas){height:310px}}
+@media(max-width:760px){.service-intro{grid-template-columns:1fr;gap:20px;padding:40px 6% 30px}.service-intro h1{font-size:clamp(43px,11.5vw,62px);margin-bottom:23px}.service-intro .lead{font-size:21px}.service-mascot :is(img,canvas){height:220px;max-width:360px}.catering-mascot :is(img,canvas){height:245px}.service-mascot{margin:0 -5px}.service-intro .eyebrow{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.service-mascot :is(img,canvas){animation:none!important}}
+
+/* One illustrated phone, with real accessible HTML inside its screen. */
+.order-phone{width:480px;max-width:100%;aspect-ratio:1190/1322;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;transform:none!important;overflow:visible;container-type:inline-size}
+.phone-holder-art{display:block;width:100%;height:auto}
+.phone-screen{position:absolute;left:6.2%;top:12%;width:46.5%;height:80%;overflow:hidden;border-radius:7%;display:flex;flex-direction:column;justify-content:center;padding:2%;box-sizing:border-box}
+.phone-screen .phone-shop{background:transparent;padding:0 0 5cqw;border:0}
+.phone-screen .phone-shop img{width:19cqw;margin-bottom:2cqw}
+.phone-screen .phone-shop strong{font-size:5cqw;white-space:nowrap}
+.phone-screen .phone-shop>span{font-size:2.6cqw}
+.phone-screen .phone-content{padding:0}
+.phone-screen .phone-category{font-size:2.5cqw;margin-bottom:1cqw}
+.phone-screen .phone-dish{font-size:2.9cqw;gap:1cqw;padding:3cqw 0}
+.phone-screen .phone-dish b{font-size:2.7cqw}
+.phone-screen .phone-dish small{display:none}
+.phone-screen .phone-cta{font-size:2.8cqw;margin-top:4cqw;padding:3cqw 1cqw}
+.phone-screen .phone-note{font-size:2.4cqw;margin-top:3cqw}
+.order-phone:focus-visible{outline:3px solid #65300d;outline-offset:8px;border-radius:20px}
+@media(max-width:760px){.order-phone{width:430px}.frituur-order{gap:25px}}
+.frituur-order>*{min-width:0}.order-phone{width:100%;max-width:480px}@media(max-width:760px){.frituur-order{grid-template-columns:minmax(0,1fr)}.order-phone{max-width:430px}}
+.phone-screen .phone-shop{padding-bottom:3cqw;flex-shrink:0}.phone-screen .phone-dish{padding:2.4cqw 0}.phone-screen .phone-cta{margin-top:3cqw}.phone-screen .phone-note{margin-top:2cqw;font-size:2.3cqw;line-height:1.4}

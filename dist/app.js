@@ -112,3 +112,54 @@ const menuSearch=document.querySelector('#menu-search');if(menuSearch){let categ
 document.querySelectorAll('[data-load-google]').forEach(button=>button.addEventListener('click',()=>{const box=button.closest('.google-map-box');const iframe=document.createElement('iframe');iframe.title='Google Maps: De Frietkazerne';iframe.src='https://maps.google.com/maps?q=De%20Frietkazerne%20Brandweerstraat%202%209850%20Deinze&z=16&output=embed';iframe.loading='lazy';iframe.referrerPolicy='strict-origin-when-cross-origin';iframe.allowFullscreen=true;box.replaceChildren(iframe)}));
 
 document.querySelectorAll('.compact-google-reviews').forEach(section=>{const track=section.querySelector('.google-review-track'),prev=section.querySelector('[data-review-step="-1"]'),next=section.querySelector('[data-review-step="1"]'),status=section.querySelector('.review-position');function sync(){const card=track.querySelector('.google-review-card'),step=card.getBoundingClientRect().width+18,total=track.children.length;const first=Math.min(total,Math.round(track.scrollLeft/step)+1),visible=Math.max(1,Math.round(track.clientWidth/step));status.textContent=first+'–'+Math.min(total,first+visible-1)+' van '+total+' beoordelingen';prev.disabled=track.scrollLeft<5;next.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-5}section.querySelectorAll('[data-review-step]').forEach(button=>button.addEventListener('click',()=>{const card=track.querySelector('.google-review-card');track.scrollBy({left:(card.getBoundingClientRect().width+18)*Number(button.dataset.reviewStep),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})}));track.addEventListener('scroll',sync,{passive:true});window.addEventListener('resize',sync);sync()});
+
+// Shared gaze rig: coordinates stay attached to the illustration, including CSS motion.
+(()=>{
+ const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ const pointer={x:0,y:0,active:false};
+ window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;pointer.x=e.clientX;pointer.y=e.clientY;pointer.active=true},{passive:true});
+ document.documentElement.addEventListener('pointerleave',()=>pointer.active=false);
+ const rigs=[
+  ['.catering-mascot img',[[608,229,16.5,28,.42],[651,240,17,28,.42]]],
+  ['.truck-mascot img',[[906,412,7.5,12,.38],[925,417,8,12,.40]]],
+  ['.contact-sitter img',[[572,253,16,28,.32],[615,264,17,28,.40]]],
+  ['.phone-holder-art',[[882,228,12,22,.35],[917,236,14,22,.40]]],
+  ['.loading-mascot',[[1024,210,14,22,.30],[1057,218,14,22,.37]],[620,0,720,1085]]
+ ];
+ rigs.forEach(([selector,eyes,crop])=>{
+  const original=document.querySelector(selector);if(!original)return;
+  const source=original.tagName.toLowerCase()==='svg'?original.querySelector('image').getAttribute('href'):original.getAttribute('src');
+  const picture=new Image();picture.onload=()=>{
+   if(!original.isConnected)return;
+   const [ox,oy,w,h]=crop||[0,0,picture.naturalWidth,picture.naturalHeight];
+   const canvas=document.createElement('canvas');canvas.className=original.getAttribute('class')||'';canvas.width=w;canvas.height=h;
+   const alt=original.getAttribute('alt');if(alt){canvas.setAttribute('role','img');canvas.setAttribute('aria-label',alt)}else canvas.setAttribute('aria-hidden','true');
+   const ctx=canvas.getContext('2d');if(!ctx)return;
+   original.replaceWith(canvas);let visible=true,raf=0,last=0,time=0,nextBlink=1.8+Math.random()*2,blinkAt=-10,gx=0,gy=0;
+   const clamp=n=>Math.max(-1,Math.min(1,n));
+   function frame(stamp){raf=0;if(!canvas.isConnected){observer.disconnect();return}if(document.hidden||!visible)return;
+    const dt=last?Math.min(.05,(stamp-last)/1000):0;last=stamp;if(!reduced)time+=dt;
+    if(time>nextBlink){blinkAt=time;nextBlink=time+2.5+Math.random()*3.3}
+    const r=canvas.getBoundingClientRect(),scale=Math.min(r.width/w,r.height/h),left=r.left+(r.width-w*scale)/2,top=r.top+(r.height-h*scale)/2;
+    const cx=(eyes[0][0]+eyes[1][0])/2,cy=(eyes[0][1]+eyes[1][1])/2;
+    const tx=reduced?0:pointer.active?clamp((pointer.x-left-(cx-ox)*scale)/180):Math.sin(time*.65)*.65;
+    const ty=reduced?0:pointer.active?clamp((pointer.y-top-(cy-oy)*scale)/180):Math.sin(time*.48)*.4;
+    const ease=1-Math.exp(-dt*9);gx+=(tx-gx)*ease;gy+=(ty-gy)*ease;
+    ctx.clearRect(0,0,w,h);ctx.drawImage(picture,ox,oy,w,h,0,0,w,h);
+    const phase=(time-blinkAt)/.28,blink=phase>=0&&phase<=1?Math.sin(phase*Math.PI):0;
+    eyes.forEach(([x,y,rx,ry,a])=>{
+     ctx.save();ctx.translate(x-ox,y-oy);ctx.rotate(a);
+     ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.clip();ctx.fillStyle='#fffdf7';ctx.fillRect(-rx,-ry,rx*2,ry*2);
+     ctx.fillStyle='#111a18';ctx.beginPath();ctx.ellipse(gx*rx*.48,gy*ry*.35+ry*.12,rx*.43,ry*.46,0,0,Math.PI*2);ctx.fill();
+     ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(gx*rx*.48+rx*.13,gy*ry*.35-ry*.09,rx*.14,ry*.12,0,0,Math.PI*2);ctx.fill();
+     if(blink>0){ctx.fillStyle='#ffad8c';ctx.fillRect(-rx,-ry,rx*2,ry*blink);ctx.fillRect(-rx,ry*(1-blink),rx*2,ry*blink);ctx.strokeStyle='#38281f';ctx.lineWidth=Math.max(1,rx*.12);ctx.beginPath();ctx.moveTo(-rx,-ry+ry*blink);ctx.lineTo(rx,-ry+ry*blink);ctx.stroke()}
+     ctx.restore();
+    });
+    if(!reduced)raf=requestAnimationFrame(frame);
+   }
+   const start=()=>{last=0;if(!raf&&canvas.isConnected)raf=requestAnimationFrame(frame)};
+   const observer=new IntersectionObserver(es=>{visible=es[0].isIntersecting;if(visible)start();else{cancelAnimationFrame(raf);raf=0}},{threshold:0});observer.observe(canvas);
+   document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else start()});start();
+  };picture.src=source;
+ });
+})();
