@@ -51,6 +51,11 @@ if(mascot){
   ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,771,520);
   // A common camera and ground plane connect the whole scene.
   ctx.drawImage(setting,0,0,771,514);
+  // Soft cooking steam rises inside the open service window.
+  for(let i=0;i<3;i++){const u=(time*.24+i*.33)%1;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.2;ctx.strokeStyle='#fff4d4';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(185+i*22,279-u*18);ctx.bezierCurveTo(179+i*22,271-u*18,193+i*22,266-u*18,185+i*22,257-u*18);ctx.stroke();ctx.restore()}
+  // Leaves move independently while the architecture stays firmly grounded.
+  if(!reduced)for(let i=0;i<7;i++){const u=(time*.065+i*.143)%1,x=105+i*83+Math.sin(time*.8+i)*8,y=75+u*120;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.55;ctx.translate(x,y);ctx.rotate(time*.7+i);ctx.fillStyle=i%2?'#6e8b25':'#a0ac3d';ctx.beginPath();ctx.ellipse(0,0,3.2,1.3,0,0,Math.PI*2);ctx.fill();ctx.restore()}
+
   ctx.fillStyle='rgba(82,52,27,.12)';ctx.beginPath();ctx.ellipse(602,453,86,9,0,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.ellipse(293,466,91,8,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#fff6df';ctx.strokeStyle='#5c402b';ctx.lineWidth=2;ctx.lineJoin='round';
@@ -102,7 +107,7 @@ if(mascot){
   paint();if(!reduced)raf=requestAnimationFrame(frame);
  }
  const start=()=>{last=0;if(loaded===3&&!raf)raf=requestAnimationFrame(frame)};
- man.onload=fries.onload=setting.onload=()=>{loaded++;start()};man.src='/assets/firefighter-cutout.png';fries.src='/assets/fries-cutout.png';setting.src='/assets/kazerne-scene.webp';
+ man.onload=fries.onload=setting.onload=()=>{loaded++;start()};man.src='/assets/firefighter-cutout.png';fries.src='/assets/fries-cutout.png';setting.src='/assets/kazerne-streetview.webp';
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;last=0}else start()});
  new IntersectionObserver(es=>{visible=es[0].isIntersecting;if(visible)start();else{cancelAnimationFrame(raf);raf=0;last=0}},{threshold:.05}).observe(canvas);
 }

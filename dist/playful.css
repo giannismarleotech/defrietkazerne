@@ -100,3 +100,22 @@ body{overflow-x:clip}.ribbon{width:100%;margin-left:0}.scene-caption{display:non
 
 /* Full-width page and navigation on every screen size. */
 html{width:100%}body{width:100%;max-width:none;margin:0}header,.topline{width:100%;padding-inline:clamp(16px,3vw,48px)}header{gap:24px}header .brand{flex-shrink:0}header nav{min-width:0}.frituur-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.food-category{min-width:0}@media(max-width:760px){header{gap:12px}header nav{width:100%;left:0;right:0;padding-inline:clamp(16px,5vw,28px)}.frituur-categories{grid-template-columns:minmax(0,1fr)}}
+/* Keep backgrounds edge-to-edge, with the original comfortable content width. */
+header,.topline{padding-inline:max(5%,calc((100% - 1620px)/2))}
+.section,.intro,.detail-note,.closing{padding-inline:max(7%,calc((100% - 1548px)/2))}
+.service-intro{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)}
+.fun-hero{padding-inline:max(6%,calc((100% - 1584px)/2))}
+.frituur-order{padding-inline:max(9%,calc((100% - 1476px)/2))}
+.wide-photo{margin-inline:max(7%,calc((100% - 1548px)/2))}
+footer{padding-inline:max(5%,calc((100% - 1620px)/2))}
+@media(max-width:760px){header,.topline{padding-inline:5%}.section,.intro,.detail-note,.closing,.fun-hero,.frituur-order{padding-inline:6%}.service-intro{grid-template-columns:minmax(0,1fr)}.wide-photo{margin-inline:6%}}
+.intro{max-width:none}.intro:not(.service-intro) h1{max-width:900px}.intro:not(.service-intro) .lead{max-width:660px}
+
+/* A calm sky spans the whole intro; copy remains on a warm readable foreground. */
+.fun-hero{isolation:isolate;background:linear-gradient(180deg,#d6eff1 0%,#edf1d5 38%,#ffe9b8 79%)}
+.hero-sky{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}.fun-copy,.animated-mascot{position:relative;z-index:1}
+.sky-sun{position:absolute;right:13%;top:35px;width:100px;height:100px;border-radius:50%;background:#ffdc83;box-shadow:0 0 0 18px #ffdc8322,0 0 75px #ffdd8b77;animation:sun-warmth 8s ease-in-out infinite}
+.sky-cloud{position:absolute;width:180px;height:37px;background:#ffffffa6;border-radius:70%;filter:blur(.4px);animation:sky-drift 70s linear infinite;left:-220px;top:50px}.sky-cloud:before,.sky-cloud:after{content:'';position:absolute;border-radius:50%;background:inherit}.sky-cloud:before{width:85px;height:65px;left:28px;bottom:7px}.sky-cloud:after{width:68px;height:48px;left:85px;bottom:9px}.cloud-two{top:125px;animation-duration:95s;animation-delay:-43s;opacity:.65;scale:.7}.cloud-three{top:38px;animation-duration:110s;animation-delay:-75s;opacity:.6;scale:1.15}
+@keyframes sky-drift{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 440px))}}@keyframes sun-warmth{50%{opacity:.78;transform:scale(1.04)}}
+@media(max-width:760px){.sky-sun{width:65px;height:65px;right:8%;top:22px}.hero-sky{opacity:.65}.cloud-two{top:330px}}
+@media(prefers-reduced-motion:reduce){.hero-sky i{animation:none}.cloud-one{left:15%}.cloud-two{left:65%}.cloud-three{left:40%}}
