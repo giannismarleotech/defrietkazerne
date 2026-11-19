@@ -29,10 +29,79 @@ if(form){
  });
 }
 
+// Keep the tap target separate from the artwork and any surrounding links.
+const mascotMotion = matchMedia('(prefers-reduced-motion: reduce)');
+function addMascotAction(host, label, message, react) {
+ const button = document.createElement('button');
+ button.type = 'button';
+ button.className = 'mascot-tap';
+ button.setAttribute('aria-label', label);
+ button.title = label;
+ const bubble = document.createElement('span');
+ bubble.className = 'mascot-reaction';
+ bubble.setAttribute('aria-hidden', 'true');
+ bubble.textContent = message;
+ bubble.hidden = true;
+ let timer;
+ button.addEventListener('click', () => {
+  clearTimeout(timer);
+  bubble.hidden = false;
+  timer = setTimeout(() => { bubble.hidden = true }, 1400);
+  if (!mascotMotion.matches) react();
+ });
+ host.append(button, bubble);
+}
+
+const mascotReactions = [
+ ['.catering-mascot', 'img, canvas', 'Laat de traiteur groeten', 'Smakelijk!', 'bow'],
+ ['.truck-mascot', 'img, canvas', 'Laat de frietmobiel groeten', 'Frietjes op komst!', 'bounce'],
+ ['.contact-sitter', 'img, canvas', 'Zeg hallo tegen het mannetje', 'Hoi!', 'wave'],
+ ['.order-phone', '.phone-holder-art', 'Laat het mannetje bij de besteltelefoon groeten', 'Goesting in frietjes?', 'wave']
+];
+mascotReactions.forEach(([selector, artwork, label, message, motion]) => {
+ let host = document.querySelector(selector);
+ if (!host) return;
+ if (host.matches('a.order-phone')) {
+  // The character has its own button. The phone screen still opens Unipage.
+  const link = host;
+  host = document.createElement('div');
+  host.className = 'order-phone mascot-phone-stage';
+  link.className = 'mascot-order-link';
+  link.before(host);
+  host.append(link);
+ }
+ host.removeAttribute('aria-hidden');
+ let reaction;
+ addMascotAction(host, label, message, () => {
+  reaction?.cancel();
+  const frames = {
+   bow: ['none', 'translateY(5px) rotate(6deg)', 'translateY(-6px) rotate(-3deg)', 'none'],
+   bounce: ['none', 'translateY(-14px) rotate(-3deg)', 'translateY(2px) rotate(2deg)', 'none'],
+   wave: ['none', 'rotate(-7deg)', 'rotate(5deg)', 'rotate(-4deg)', 'none']
+  };
+  const art = host.querySelector(artwork);
+  // Tilt from the base so the character stays connected to the ground.
+  reaction = art.animate?.(frames[motion].map(transform => ({
+   transform, transformOrigin: host.matches('.mascot-phone-stage') ? '92% 88%' : '50% 88%'
+  })), { duration: 650, easing: 'ease-in-out' });
+ });
+});
+
 const mascot=document.querySelector('.animated-mascot');
 if(mascot){
- const canvas=mascot.querySelector('canvas'),ctx=canvas.getContext('2d'),ratio=Math.min(Math.max(window.devicePixelRatio||1,2),3);
- canvas.width=771*ratio;canvas.height=520*ratio;ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+ const canvas=mascot.querySelector('canvas'),ctx=canvas.getContext('2d');
+ const compact=matchMedia('(max-width: 760px)');
+ let ratio;
+ function sizeCanvas(){
+  const width=canvas.getBoundingClientRect().width||771;
+  const density=Math.min(window.devicePixelRatio||1,compact.matches?2:3);
+  ratio=Math.max(1,Math.min(3,Math.ceil(width*density/771*2)/2));
+  canvas.width=771*ratio;
+  canvas.height=520*ratio;
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+ }
+ sizeCanvas();
  const man=new Image(),fries=new Image(),setting=new Image();let loaded=0,time=0,last=0,raf=0,acc=0,visible=true;
  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
  const gaze={x:500,y:260,tx:500,ty:260,active:false};
@@ -41,7 +110,22 @@ if(mascot){
  const head=new Path2D('M805 0H1449V440H1175L1145 488L945 580L850 510Z');
  const arms=new Path2D('M643 503L735 490L823 526L884 562L967 578L1082 589L1177 619L1215 665L1202 722L1126 746L995 722L927 709L875 663L790 650L748 615L700 582L645 559Z');
  const body=new Path2D();body.rect(0,0,1449,1085);body.addPath(head);body.addPath(arms);
- let flying=[],pile=[],crumbs=[],nextBlink=2.6,blinkStart=-10;
+ let flying=[],pile=[],crumbs=[],nextBlink=2.6,blinkStart=-10,boostStart=-10,boostFries=0;
+ addMascotAction(mascot,'Laat het mannetje extra frietjes spuiten','Extra frietjes!',()=>{
+  boostStart=time;
+  boostFries=6;
+  blinkStart=time;
+  start();
+ });
+ function mascotPose(){
+  const boost=Math.max(0,1-(time-boostStart)/.75);
+  const recoil=Math.sin(time*(boost>0?16:4.1));
+  return {
+   sway:Math.sin(time*1.8)*.014+recoil*(.004+boost*.009),
+   bob:Math.sin(time*3.6)*1.35-boost*Math.abs(recoil)*4,
+   arm:-.014+recoil*(.032+boost*.07)
+  };
+ }
  const rest=()=>{const x=219+rnd()*146,c=Math.max(0,1-Math.abs(x-292)/77);return{x,y:448-c*(12+rnd()*30),a:.8+(rnd()-.5)*1.8,size:30+rnd()*11,born:-5}};
  for(let i=0;i<27;i++)pile.push(rest());pile.sort((a,b)=>a.y-b.y);
  window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const r=canvas.getBoundingClientRect();gaze.tx=(e.clientX-r.left)*771/r.width;gaze.ty=(e.clientY-r.top)*520/r.height;gaze.active=true},{passive:true});
@@ -57,19 +141,19 @@ if(mascot){
   ctx.restore();
 
   // Leaves move independently while the architecture stays firmly grounded.
-  if(!reduced)for(let i=0;i<7;i++){const u=(time*.065+i*.143)%1,x=105+i*83+Math.sin(time*.8+i)*8,y=75+u*120;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.55;ctx.translate(x,y);ctx.rotate(time*.7+i);ctx.fillStyle=i%2?'#6e8b25':'#a0ac3d';ctx.beginPath();ctx.ellipse(0,0,3.2,1.3,0,0,Math.PI*2);ctx.fill();ctx.restore()}
+  if(!reduced)for(let i=0;i<9;i++){const u=(time*.095+i/9)%1,x=90+i*67+Math.sin(time*1.2+i)*13+u*21,y=72+u*135;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.70;ctx.translate(x,y);ctx.rotate(time*.7+i);ctx.fillStyle=i%2?'#6e8b25':'#a0ac3d';ctx.beginPath();ctx.ellipse(0,0,4.4,1.9,0,0,Math.PI*2);ctx.fill();ctx.restore()}
 
   ctx.fillStyle='rgba(82,52,27,.12)';ctx.beginPath();ctx.ellipse(602,453,86,9,0,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.ellipse(293,466,91,8,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#fff6df';ctx.strokeStyle='#5c402b';ctx.lineWidth=2;ctx.lineJoin='round';
   ctx.beginPath();ctx.moveTo(199,439);ctx.quadraticCurveTo(290,422,385,439);ctx.lineTo(365,464);ctx.quadraticCurveTo(292,480,219,463);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle='#dfbd85';ctx.beginPath();ctx.ellipse(292,440,88,12,0,0,Math.PI*2);ctx.fill();
-  const recoil=Math.sin(time*4.1),sway=Math.sin(time*1.8)*.009+recoil*.003,bob=Math.sin(time*3.6)*.6;
+  const {sway,bob,arm}=mascotPose();
   ctx.save();ctx.translate(610,449+bob);ctx.rotate(sway);ctx.translate(-312,-309);ctx.scale(.3,.3);
   // Solid torso backing prevents gaps when the independent arm layer moves.
   ctx.save();ctx.fillStyle='#155b78';ctx.beginPath();ctx.moveTo(941,584);ctx.lineTo(1143,588);ctx.lineTo(1191,716);ctx.lineTo(965,719);ctx.closePath();ctx.fill();ctx.restore();
   ctx.save();ctx.clip(body,'evenodd');ctx.drawImage(man,0,0);ctx.restore();
-  ctx.save();ctx.translate(1120,686);ctx.rotate(-.014+recoil*.021);ctx.translate(-1120,-686);
+  ctx.save();ctx.translate(1120,686);ctx.rotate(arm);ctx.translate(-1120,-686);
   const muzzleMatrix=ctx.getTransform();const muzzle=new DOMPoint(666,535).matrixTransform(muzzleMatrix);const nozzle={x:muzzle.x/ratio,y:muzzle.y/ratio};
   ctx.clip(arms);ctx.drawImage(man,0,0);ctx.restore();
   ctx.save();const headAngle=Math.sin(time*1.15)*.036+Math.sin(time*2.3)*.01+(gaze.active?clamp((gaze.x-610)/12500,-.035,.035):0);
@@ -99,17 +183,18 @@ if(mascot){
   for(let i=0;i<3;i++){const u=(time*.22+i*.31)%1;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.16;ctx.strokeStyle='#bc965f';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(263+i*26,409-u*20);ctx.bezierCurveTo(253+i*26,397-u*20,279+i*26,390-u*20,267+i*26,377-u*20);ctx.stroke();ctx.restore()}
   return nozzle;
  }
- function nozzlePosition(){const recoil=Math.sin(time*4.1),sway=Math.sin(time*1.8)*.009+recoil*.003,bob=Math.sin(time*3.6)*.6;const matrix=new DOMMatrix().translate(610,449+bob).rotate(sway*180/Math.PI).translate(-312,-309).scale(.3).translate(1120,686).rotate((-.014+recoil*.021)*180/Math.PI).translate(-1120,-686);return new DOMPoint(666,535).matrixTransform(matrix)}
- function frame(stamp){raf=0;if(loaded<3||document.hidden||!visible)return;const dt=last?Math.min(.04,(stamp-last)/1000):0;last=stamp;
+ function nozzlePosition(){const {sway,bob,arm}=mascotPose();const matrix=new DOMMatrix().translate(610,449+bob).rotate(sway*180/Math.PI).translate(-312,-309).scale(.3).translate(1120,686).rotate(arm*180/Math.PI).translate(-1120,-686);return new DOMPoint(666,535).matrixTransform(matrix)}
+ function frame(stamp){raf=0;if(loaded<3||document.hidden||!visible)return;if(!reduced&&compact.matches&&last&&stamp-last<31){raf=requestAnimationFrame(frame);return}const dt=last?Math.min(.08,(stamp-last)/1000):0;last=stamp;
   if(!reduced){time+=dt;acc+=dt;const ease=1-Math.exp(-dt*8);if(gaze.active){gaze.x+=(gaze.tx-gaze.x)*ease;gaze.y+=(gaze.ty-gaze.y)*ease}
    if(time>=nextBlink){blinkStart=time;nextBlink=time+2.6+rnd()*3.2}
    const nozzle=nozzlePosition();
-   if(acc>.27){acc=0;const end=rest(),duration=.83+rnd()*.14;flying.push({x:nozzle.x-2,y:nozzle.y,born:time,duration,vx:(end.x-nozzle.x)/duration,vy:(end.y-nozzle.y-210*duration*duration)/duration,angle:.8+Math.atan2(end.y-nozzle.y-210*duration*duration,end.x-nozzle.x),spin:(rnd()-.5)*5,roll:3+rnd()*4,size:end.size,end});if(rnd()>.4)crumbs.push({x:nozzle.x-5,y:nozzle.y,born:time,vx:-55-rnd()*35,vy:-15-rnd()*35})}
+   if(acc>(boostFries > 0 ? .075 : .22)){acc=0;if(boostFries)boostFries--;const end=rest(),duration=.80+rnd()*.19;flying.push({x:nozzle.x-2,y:nozzle.y,born:time,duration,vx:(end.x-nozzle.x)/duration,vy:(end.y-nozzle.y-210*duration*duration)/duration,angle:.8+Math.atan2(end.y-nozzle.y-210*duration*duration,end.x-nozzle.x),spin:(rnd()-.5)*5,roll:3+rnd()*4,size:end.size,end});if(rnd()>.4)crumbs.push({x:nozzle.x-5,y:nozzle.y,born:time,vx:-55-rnd()*35,vy:-15-rnd()*35})}
    flying=flying.filter(p=>{if(time-p.born<p.duration)return true;p.end.born=time;pile.push(p.end);if(pile.length>45)pile.shift();return false});crumbs=crumbs.filter(p=>time-p.born<.45);
   }
   paint();if(!reduced)raf=requestAnimationFrame(frame);
  }
- const start=()=>{last=0;if(loaded===3&&!raf)raf=requestAnimationFrame(frame)};
+ const start=()=>{if(loaded!==3||raf||document.hidden||!visible)return;last=0;raf=requestAnimationFrame(frame)};
+ window.addEventListener('resize',()=>{sizeCanvas();start()},{passive:true});
  man.onload=fries.onload=setting.onload=()=>{loaded++;start()};man.src='/assets/firefighter-cutout.png';fries.src='/assets/fries-cutout.png';setting.src='/assets/kazerne-streetview.webp';
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;last=0}else start()});
  new IntersectionObserver(es=>{visible=es[0].isIntersecting;if(visible)start();else{cancelAnimationFrame(raf);raf=0;last=0}},{threshold:.05}).observe(canvas);
