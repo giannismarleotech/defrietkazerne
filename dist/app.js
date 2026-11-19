@@ -31,8 +31,8 @@ if(form){
 
 const mascot=document.querySelector('.animated-mascot');
 if(mascot){
- const canvas=mascot.querySelector('canvas'),ctx=canvas.getContext('2d'),ratio=Math.min(window.devicePixelRatio||1,2);
- canvas.width=771*ratio;canvas.height=520*ratio;
+ const canvas=mascot.querySelector('canvas'),ctx=canvas.getContext('2d'),ratio=Math.min(Math.max(window.devicePixelRatio||1,2),3);
+ canvas.width=771*ratio;canvas.height=520*ratio;ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
  const man=new Image(),fries=new Image(),setting=new Image();let loaded=0,time=0,last=0,raf=0,acc=0,visible=true;
  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
  const gaze={x:500,y:260,tx:500,ty:260,active:false};
@@ -53,8 +53,8 @@ if(mascot){
   ctx.drawImage(setting,0,0,771,514);
   // Blend only the landscape into the full-width sky; keep the mascot crisp.
   ctx.save();ctx.globalCompositeOperation='destination-in';
-  const groundFade=ctx.createLinearGradient(0,370,0,480);groundFade.addColorStop(0,'#000');groundFade.addColorStop(.42,'rgba(0,0,0,.88)');groundFade.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=groundFade;ctx.fillRect(0,0,771,520);
-  const edgeFade=ctx.createLinearGradient(0,0,771,0);edgeFade.addColorStop(0,'rgba(0,0,0,0)');edgeFade.addColorStop(.065,'#000');edgeFade.addColorStop(.91,'#000');edgeFade.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=edgeFade;ctx.fillRect(0,0,771,520);ctx.restore();
+  const groundFade=ctx.createLinearGradient(0,360,32,512);groundFade.addColorStop(0,'#000');groundFade.addColorStop(.34,'rgba(0,0,0,.97)');groundFade.addColorStop(.68,'rgba(0,0,0,.50)');groundFade.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=groundFade;ctx.fillRect(0,0,771,520);
+  ctx.restore();
 
   // Leaves move independently while the architecture stays firmly grounded.
   if(!reduced)for(let i=0;i<7;i++){const u=(time*.065+i*.143)%1,x=105+i*83+Math.sin(time*.8+i)*8,y=75+u*120;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.55;ctx.translate(x,y);ctx.rotate(time*.7+i);ctx.fillStyle=i%2?'#6e8b25':'#a0ac3d';ctx.beginPath();ctx.ellipse(0,0,3.2,1.3,0,0,Math.PI*2);ctx.fill();ctx.restore()}
