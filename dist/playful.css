@@ -119,3 +119,83 @@ footer{padding-inline:max(5%,calc((100% - 1620px)/2))}
 @keyframes sky-drift{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 440px))}}@keyframes sun-warmth{50%{opacity:.78;transform:scale(1.04)}}
 @media(max-width:760px){.sky-sun{width:65px;height:65px;right:8%;top:22px}.hero-sky{opacity:.65}.cloud-two{top:330px}}
 @media(prefers-reduced-motion:reduce){.hero-sky i{animation:none}.cloud-one{left:15%}.cloud-two{left:65%}.cloud-three{left:40%}}
+
+/* Keep navigation, prices and form controls usable on narrow screens. */
+@media (max-width: 760px) {
+  header nav.open {
+    max-height: 72vh;
+    max-height: 72dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  header nav a,
+  .anchor-nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  header .nav-order,
+  .anchor-nav a {
+    justify-content: center;
+  }
+  .anchor-nav {
+    gap: 8px;
+    padding-block: 14px;
+  }
+  .anchor-nav a {
+    font-size: 14px;
+    padding-inline: 12px;
+  }
+  .intro h1,
+  .intro:not(.service-intro) h1 {
+    font-size: clamp(38px, 10vw, 64px);
+    overflow-wrap: break-word;
+  }
+  .menuitem, .formula, .contact-grid > *, .footgrid > * {
+    min-width: 0;
+  }
+  .menuitem .price {
+    font-size: clamp(24px, 7vw, 32px);
+    line-height: 1.2;
+    white-space: normal;
+  }
+  details > summary,
+  .button {
+    min-height: 44px;
+  }
+  details > summary {
+    line-height: 1.5;
+    align-content: center;
+  }
+  .actions .button {
+    font-size: 14px;
+  }
+  main input:not([type="checkbox"]):not([type="radio"]),
+  main select,
+  main textarea {
+    box-sizing: border-box;
+    min-height: 44px;
+    max-width: 100%;
+    font-size: 16px;
+  }
+  .footbottom a, .footbottom button {
+    overflow-wrap: anywhere;
+  }
+  .cookie {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    padding-right: 54px;
+  }
+  .cookie-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+@media (max-width: 380px) {
+  .actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+  .footgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
