@@ -199,3 +199,48 @@ footer{padding-inline:max(5%,calc((100% - 1620px)/2))}
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* A separate tap target lets the character react without hijacking navigation. */
+.mascot-tap {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  border-radius: 22px;
+}
+.mascot-tap:focus-visible, .mascot-order-link:focus-visible {
+  outline: 3px solid #65300d;
+  outline-offset: 4px;
+}
+.animated-mascot > .mascot-tap { bottom: 23px; }
+.mascot-order-link { display: block; }
+.mascot-phone-stage > .mascot-tap { left: 61%; top: 4%; right: 1%; bottom: 5%; }
+.mascot-reaction {
+  position: absolute;
+  z-index: 4;
+  inset: 10% 8% auto auto;
+  max-width: 86%;
+  padding: .35em .65em;
+  border: 2px solid #65300d;
+  border-radius: 15px 15px 3px 15px;
+  background: #fff6df;
+  color: #522609;
+  box-shadow: 2px 3px #65300d;
+  font-size: clamp(.875rem, 3.2vw, 1.125rem);
+  font-weight: 800;
+  pointer-events: none;
+}
+.mascot-reaction[hidden] { display: none; }
+.contact-sitter > .mascot-reaction { right: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .mascot-reaction { animation: mascot-reaction-in .22s ease-out; }
+  @keyframes mascot-reaction-in {
+    from { opacity: 0; transform: translateY(6px) scale(.94); }
+    to { opacity: 1; transform: none; }
+  }
+}
